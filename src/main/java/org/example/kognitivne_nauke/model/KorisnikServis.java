@@ -14,8 +14,6 @@ public class KorisnikServis {
         File fajl = new File(FAJL_PUTANJA);
 
         if (!fajl.exists()) {
-            // Ako ne postoji, otvaramo blok za pisanje u fajl
-            // Koristićemo try-with-resources i FileWriter/PrintWriter
             try (PrintWriter out = new PrintWriter(new FileWriter(fajl))) {
                 out.println("admin;admin123;ADMIN");
                 out.println("istrazivac;istrazivac123;ISTRAZIVAC");
@@ -25,13 +23,14 @@ public class KorisnikServis {
                 System.out.println("Greška prilikom kreiranja fajla: " + e.getMessage());
             }
         }
+        ucitajKorisnike();
 
     }
 
     private void ucitajKorisnike() {
         File fajl = new File(FAJL_PUTANJA);
 
-        // Ako fajl ne postoji, kreiramo ga i upisujemo inicijalnog admina
+
         if (!fajl.exists()) {
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(fajl))) {
                 writer.write("admin,admin123,ADMIN");
@@ -41,15 +40,15 @@ public class KorisnikServis {
             }
         }
 
-        // Čitamo sve korisnike iz fajla i ubacujemo ih u našu listu [cite: 62]
-        korisnici.clear(); // Očistimo listu pre punjenja
+
+        korisnici.clear();
         try (BufferedReader reader = new BufferedReader(new FileReader(FAJL_PUTANJA))) {
             String linija;
             while ((linija = reader.readLine()) != null) {
-                String[] delovi = linija.split(",");
+                String[] delovi = linija.split(";");
                 if (delovi.length == 3) {
                     Korisnik k = new Korisnik(delovi[0], delovi[1], delovi[2]);
-                    korisnici.add(k); // Punimo listu!
+                    korisnici.add(k);
                 }
             }
         } catch (IOException e) {
@@ -61,10 +60,10 @@ public class KorisnikServis {
     public Korisnik login(String username, String password) {
         for (Korisnik k : korisnici) {
             if (k.getUsername().equals(username) && k.getPassword().equals(password)) {
-                return k; // Pronađen korisnik [cite: 63]
+                return k;
             }
         }
-        return null; // Pogrešni podaci
+        return null;
     }
 
     public boolean registrujKorisnika(String username, String lozinka){
@@ -76,7 +75,7 @@ public class KorisnikServis {
         Korisnik novi = new Korisnik(username,lozinka,"EKSTERNI");
         korisnici.add(novi);
         try(java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(FAJL_PUTANJA, true))) {
-            writer.write(username + "," + lozinka + ";" + "EKSTERNI");
+            writer.write(username + ";" + lozinka + ";" + "EKSTERNI");
             writer.newLine();
             return true;
         } catch (java.io.IOException e) {
