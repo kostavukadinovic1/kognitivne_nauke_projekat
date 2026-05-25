@@ -7,6 +7,8 @@ import java.util.List;
 
 public class KorisnikServis {
     private static final String FAJL_PUTANJA = "korisnici.txt";
+    List<Korisnik> korisnici = new ArrayList<>();
+
 
     public KorisnikServis() {
         File fajl = new File(FAJL_PUTANJA);
@@ -26,42 +28,61 @@ public class KorisnikServis {
 
     }
 
-    private List<Korisnik> ucitajKorisnike() {
-        List<Korisnik> korisnici = new ArrayList<>();
+    private void ucitajKorisnike() {
+        File fajl = new File(FAJL_PUTANJA);
 
-        try (BufferedReader br = new BufferedReader(new FileReader(FAJL_PUTANJA))) {
+        // Ako fajl ne postoji, kreiramo ga i upisujemo inicijalnog admina
+        if (!fajl.exists()) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(fajl))) {
+                writer.write("admin,admin123,ADMIN");
+                writer.newLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Čitamo sve korisnike iz fajla i ubacujemo ih u našu listu [cite: 62]
+        korisnici.clear(); // Očistimo listu pre punjenja
+        try (BufferedReader reader = new BufferedReader(new FileReader(FAJL_PUTANJA))) {
             String linija;
-            while ((linija = br.readLine()) != null) {
-                String[] delovi = linija.split(";");
-
+            while ((linija = reader.readLine()) != null) {
+                String[] delovi = linija.split(",");
                 if (delovi.length == 3) {
-                    String username = delovi[0];
-                    String lozinka = delovi[1];
-                    String role = delovi[2];
-                    Korisnik korisnik = new Korisnik(username, lozinka, role);
-                    korisnici.add(korisnik);
+                    Korisnik k = new Korisnik(delovi[0], delovi[1], delovi[2]);
+                    korisnici.add(k); // Punimo listu!
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-        return korisnici;
     }
 
 
     public Korisnik login(String username, String password) {
-        List<Korisnik> sviKorisnici = ucitajKorisnike();
-
-        for(Korisnik k : sviKorisnici){
-            if(k.getUsername().equals(username)){
-                if(k.getPassword().equals(password)){
-                    return k;
-                }
+        for (Korisnik k : korisnici) {
+            if (k.getUsername().equals(username) && k.getPassword().equals(password)) {
+                return k; // Pronađen korisnik [cite: 63]
             }
         }
-        return null;
+        return null; // Pogrešni podaci
     }
 
-
+    public boolean registrujKorisnika(String username, String lozinka){
+        for(Korisnik k: korisnici){
+            if(k.getUsername().equalsIgnoreCase(username)){
+                return false;
+            }
+        }
+        Korisnik novi = new Korisnik(username,lozinka,"EKSTERNI");
+        korisnici.add(novi);
+        try(java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(FAJL_PUTANJA, true))) {
+            writer.write(username + "," + lozinka + ";" + "EKSTERNI");
+            writer.newLine();
+            return true;
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
 }
