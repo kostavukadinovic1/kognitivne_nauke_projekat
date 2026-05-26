@@ -5,9 +5,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class KonekcijaBaze {
-    private static final String URL = "jdbc:mysql://localhost:3306/kognitivne_nauke_dod_spec?useSSL=false&serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://localhost:3306/kognitivne_nauke_db?useSSL=false&serverTimezone=UTC";
     private static final String USERNAME = "root";
-    private static final String PASSWORD = "";
+    private static final String PASSWORD = "Kosta!.!.!";
 
     public static Connection kreirajKonekciju(){
         try{
