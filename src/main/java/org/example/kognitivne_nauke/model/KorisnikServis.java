@@ -1,18 +1,23 @@
 package org.example.kognitivne_nauke.model;
 
 import java.io.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 
 public class KorisnikServis {
     private static final String FAJL_PUTANJA = "korisnici.txt";
-    List<Korisnik> korisnici = new ArrayList<>();
+    private Connection konekcija;
 
 
-    public KorisnikServis() {
+    public KorisnikServis(Connection konekcija) {
+        this.konekcija = konekcija;
+
         File fajl = new File(FAJL_PUTANJA);
-
         if (!fajl.exists()) {
             try (PrintWriter out = new PrintWriter(new FileWriter(fajl))) {
                 out.println("admin;admin123;ADMIN");
@@ -23,65 +28,40 @@ public class KorisnikServis {
                 System.out.println("Greška prilikom kreiranja fajla: " + e.getMessage());
             }
         }
-        ucitajKorisnike();
-
     }
-
-    private void ucitajKorisnike() {
-        File fajl = new File(FAJL_PUTANJA);
-
-
-        if (!fajl.exists()) {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(fajl))) {
-                writer.write("admin,admin123,ADMIN");
-                writer.newLine();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-
-        korisnici.clear();
-        try (BufferedReader reader = new BufferedReader(new FileReader(FAJL_PUTANJA))) {
-            String linija;
-            while ((linija = reader.readLine()) != null) {
-                String[] delovi = linija.split(";");
-                if (delovi.length == 3) {
-                    Korisnik k = new Korisnik(delovi[0], delovi[1], delovi[2]);
-                    korisnici.add(k);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 
     public Korisnik login(String username, String password) {
-        for (Korisnik k : korisnici) {
-            if (k.getUsername().equals(username) && k.getPassword().equals(password)) {
-                return k;
-            }
-        }
-        return null;
-    }
+        String sql = "SELECT * FROM korisnik WHERE username = ? AND password = ?";
 
-    public boolean registrujKorisnika(String username, String lozinka){
-        for(Korisnik k: korisnici){
-            if(k.getUsername().equalsIgnoreCase(username)){
-                return false;
+        try(PreparedStatement psLogin = konekcija.prepareStatement(sql)) {
+            psLogin.setString(1, username);
+            psLogin.setString(2, password);
+
+            try (ResultSet rs = psLogin.executeQuery()) {
+                if (rs.next()) {
+                    return new Korisnik(rs.getString("username"), rs.getString("password"), rs.getString("role"));
+                }
             }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        return null;
         }
-        Korisnik novi = new Korisnik(username,lozinka,"EKSTERNI");
-        korisnici.add(novi);
-        try(java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(FAJL_PUTANJA, true))) {
-            writer.write(username + ";" + lozinka + ";" + "EKSTERNI");
-            writer.newLine();
+        public boolean registrujKorisnika(String username, String lozinka){
+        String sql = "INSERT INTO korisnik (username, password, role) VALUES (?,?,'EKSTERNI')";
+        try(PreparedStatement psRegistruj = konekcija.prepareStatement(sql)){
+            psRegistruj.setString(1,username);
+            psRegistruj.setString(2,lozinka);
+            psRegistruj.executeUpdate();
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(FAJL_PUTANJA, true))) {
+                writer.write(username + ";" + lozinka + ";EKSTERNI");
+                writer.newLine();
+            }
             return true;
-        } catch (java.io.IOException e) {
-            e.printStackTrace();
+        }
+     catch (SQLException  | IOException e) {
             return false;
         }
     }
-
 }

@@ -18,7 +18,7 @@ public class KognitivneNaukeApplication {
         if (konekcija == null) {
             System.out.println("UPOZORENJE: Aplikacija je podignuta bez baze podataka. SQL upiti neće raditi!");
         }
-        KorisnikServis ks = new KorisnikServis();
+        KorisnikServis ks = new KorisnikServis(konekcija);
         LoginProzor lp = new LoginProzor();
         LoginController controller = new LoginController(lp,ks,konekcija);
     }

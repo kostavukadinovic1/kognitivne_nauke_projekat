@@ -32,7 +32,7 @@ public class LoginController {
                 Korisnik k = servis.login(unetoIme, unetaLozinka);
 
                 if (k != null) {
-                    if (k.getRole().equalsIgnoreCase("EKSTERNI")) {
+                    if (k.getRole().trim().equalsIgnoreCase("EKSTERNI")) {
                         prozorLogin.dispose();
                         EksterniKorisnikProzor ekProzor = new EksterniKorisnikProzor();
                         new EksterniKorisnikController(ekProzor, LoginController.this.konekcija, unetoIme);

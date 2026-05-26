@@ -19,6 +19,7 @@ public class EksterniKorisnikController {
     private Connection konekcija;
     private String ulogovaniUsername;
 
+
     public EksterniKorisnikController(EksterniKorisnikProzor ekProzor, Connection konekcija, String ulogovaniUsername) {
         this.ekProzor = ekProzor;
         this.konekcija = konekcija;
@@ -37,9 +38,10 @@ public class EksterniKorisnikController {
                     JOptionPane.showMessageDialog(ekProzor, "Sva polja moraju biti popunjena!", "Greška", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                boolean uspeh = azurirajNalogUFajlu(EksterniKorisnikController.this.ulogovaniUsername, novoIme, novaLozinka);
+                boolean uspeh = azurirajNalog(EksterniKorisnikController.this.ulogovaniUsername, novoIme, novaLozinka);
 
                     if (uspeh) {
+                        azurirajNalogUFajlu(EksterniKorisnikController.this.ulogovaniUsername,novoIme,novaLozinka);
                         JOptionPane.showMessageDialog(ekProzor, "Nalog je uspešno ažuriran!");
 
                         EksterniKorisnikController.this.ulogovaniUsername = novoIme;
@@ -66,9 +68,10 @@ public class EksterniKorisnikController {
                     JOptionPane.showMessageDialog(ekProzor, "Uneli ste pogrešnu lozinku!", "Greška", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                boolean obrisano = obrisiNalogIzFajla(EksterniKorisnikController.this.ulogovaniUsername);
+                boolean obrisanoUBAZI = obrisiNalog(EksterniKorisnikController.this.ulogovaniUsername);
 
-                if(obrisano){
+                if(obrisanoUBAZI){
+                    obrisiNalogIzFajla(EksterniKorisnikController.this.ulogovaniUsername);
                     JOptionPane.showMessageDialog(ekProzor, "Vaš nalog je trajno obrisan. Aplikacija se zatvara.");
                     ekProzor.dispose();
                     System.exit(0);
@@ -80,91 +83,47 @@ public class EksterniKorisnikController {
     }
 
     private boolean proveriLozinku(String username, String lozinka){
-        File fajl = new File("korisnici.txt");
-        try(BufferedReader br = new BufferedReader(new FileReader(fajl))) {
-            String linija;
-            while((linija = br.readLine())!= null){
-                if(linija.startsWith(username + ";")){
-                    String[] delovi = linija.split(";");
-                    if(delovi.length >= 2){
-                        return delovi[1].equals(lozinka);
-                    }
-                }
+        String sql = "SELECT * FROM korisnik WHERE username = ? AND password = ?";
+        try(PreparedStatement psProveri = konekcija.prepareStatement(sql)){
+            psProveri.setString(1,username);
+            psProveri.setString(2,lozinka);
+
+            try (ResultSet rs = psProveri.executeQuery()) {
+                return rs.next();
             }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } ;
-        return false;
-    }
-
-    private boolean azurirajNalogUFajlu(String staroIme, String novoIme, String novaLozinka) {
-        File fajl = new File("korisnici.txt");
-        List<String> sveLinije = new ArrayList<>();
-        boolean pronadjen = false;
-
-        try (BufferedReader br = new BufferedReader(new FileReader(fajl))) {
-            String linija;
-            while ((linija = br.readLine()) != null) {
-                if (linija.startsWith(staroIme + ";")) {
-                    String novaLinija = novoIme + ";" + novaLozinka + ";" + "EKSTERNI";
-                    sveLinije.add(novaLinija);
-                    pronadjen = true;
-                } else {
-                    sveLinije.add(linija);
-                }
-
-            }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        if (pronadjen) {
-            try (PrintWriter pw = new PrintWriter(new FileWriter(fajl))) {
-                for (String l : sveLinije) {
-                    pw.println(l);
-                }
-                return true;
-            } catch (IOException e) {
+    }
+
+    private boolean azurirajNalog(String staroIme, String novoIme, String novaLozinka) {
+        String sql = "UPDATE korisnik SET username = ?, password = ? WHERE username = ?";
+
+        try(PreparedStatement psAzuriraj = konekcija.prepareStatement(sql)){
+            psAzuriraj.setString(1,novoIme);
+            psAzuriraj.setString(2,novaLozinka);
+            psAzuriraj.setString(3,staroIme);
+
+            int izmenjenoRedova = psAzuriraj.executeUpdate();
+            return izmenjenoRedova > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean obrisiNalog(String username){
+            String brisanjeSql = "DELETE FROM korisnik WHERE username = ?";
+
+            try(PreparedStatement psBrisanje = konekcija.prepareStatement(brisanjeSql)){
+                psBrisanje.setString(1,username);
+
+                int obrisano = psBrisanje.executeUpdate();
+                return obrisano > 0;
+            } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-        }
-        return false;
     }
 
-    private boolean obrisiNalogIzFajla(String username){
-        File fajl = new File("korisnici.txt");
-        List<String> sveLinije = new ArrayList<>();
-        boolean pronadjen = false;
-
-        try(BufferedReader br = new BufferedReader(new FileReader(fajl))) {
-            String linija;
-            while((linija = br.readLine())!= null){
-                if(linija.startsWith(username + ";")){
-                    pronadjen = true;
-                }else{
-                    sveLinije.add(linija);
-                }
-            }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }if(pronadjen){
-            try(PrintWriter pw = new PrintWriter(new FileWriter(fajl))){
-                for(String l: sveLinije){
-                    pw.println(l);
-                }
-                return true;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        return false;
-    }
 
     public void ucitajLaboratorijeIIstrazivace(){
         DefaultTableModel model = ekProzor.getTableModel();
@@ -193,6 +152,60 @@ public class EksterniKorisnikController {
             }
 
         } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void azurirajNalogUFajlu(String staroIme, String novoIme, String novaLozinka) {
+        File stariFajl = new File("korisnici.txt");
+        List<String> linije = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(stariFajl))) {
+            String linija;
+            while ((linija = br.readLine()) != null) {
+                String[] delovi = linija.split(";");
+                if (delovi[0].equals(staroIme)) {
+                    linije.add(novoIme + ";" + novaLozinka + ";" + delovi[2]);
+                } else {
+                    linije.add(linija);
+                }
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (PrintWriter pw = new PrintWriter(new FileWriter(stariFajl))) {
+            for (String l : linije) {
+                pw.println(l);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void obrisiNalogIzFajla(String username) {
+        File stariFajl = new File("korisnici.txt");
+        List<String> linije = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(stariFajl))) {
+            String linija;
+            while ((linija = br.readLine()) != null) {
+                String[] delovi = linija.split(";");
+                if(!(delovi[0].equals(username))){
+                    linije.add(linija);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Na kraju prebrisujemo fajl sa preostalim korisnicima
+        try (PrintWriter pw = new PrintWriter(new FileWriter(stariFajl))) {
+            for (String l : linije) {
+                pw.println(l);
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
