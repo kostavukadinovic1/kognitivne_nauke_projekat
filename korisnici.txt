@@ -4,4 +4,3 @@ eksterni;eksterni123;EKSTERNI
 kosta,123EKSTERNI
 kosta,1234;KEKSTERNI
 lebron;123;EKSTERNI
-kosta;123;EKSTERNI
