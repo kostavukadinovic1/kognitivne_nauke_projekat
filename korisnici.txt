@@ -1,5 +1,3 @@
-admin;admin123;ADMIN
-istrazivac;istrazivac123;ISTRAZIVAC
 eksterni;eksterni123;EKSTERNI
 kosta,123EKSTERNI
 kosta,1234;KEKSTERNI

@@ -27,7 +27,6 @@ public class RegisterController {
             }
         });
 
-        // 2. Dugme za potvrdu registracije (koristi tvoj getter getBtnRegistracija())
         this.regProzor.getBtnRegistracija().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -35,13 +34,11 @@ public class RegisterController {
                 String lozinka = new String(regProzor.getTxtPassword().getPassword());
                 String potvrda = new String(regProzor.getTxtConfirmPassword().getPassword());
 
-                // Provera praznih polja
                 if (username.isEmpty() || lozinka.isEmpty() || potvrda.isEmpty()) {
                     JOptionPane.showMessageDialog(regProzor, "Sva polja moraju biti popunjena!", "Greska", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
 
-                // Provera poklapanja lozinki
                 if (!lozinka.equals(potvrda)) {
                     JOptionPane.showMessageDialog(regProzor, "Lozinke se ne poklapaju!", "Greska", JOptionPane.ERROR_MESSAGE);
                     return;

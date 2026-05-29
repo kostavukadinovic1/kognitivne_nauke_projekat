@@ -200,7 +200,6 @@ public class EksterniKorisnikController {
             e.printStackTrace();
         }
 
-        // Na kraju prebrisujemo fajl sa preostalim korisnicima
         try (PrintWriter pw = new PrintWriter(new FileWriter(stariFajl))) {
             for (String l : linije) {
                 pw.println(l);
