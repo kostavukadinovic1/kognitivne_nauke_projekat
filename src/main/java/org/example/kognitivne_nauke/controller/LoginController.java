@@ -16,13 +16,11 @@ public class LoginController {
     private KorisnikServis servis;
     private Connection konekcija;
 
-    // ISPRAVLJENO: Konekcija sada pravilno stiže kao treći parametar konstruktora
     public LoginController(LoginProzor prozorLogin, KorisnikServis servis, Connection konekcija){
         this.prozorLogin = prozorLogin;
         this.servis = servis;
         this.konekcija = konekcija;
 
-        // --- AKCIJA ZA PRIJAVU (LOGIN) ---
         this.prozorLogin.getBtnLogin().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
